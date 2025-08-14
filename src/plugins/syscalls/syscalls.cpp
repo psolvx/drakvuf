@@ -133,12 +133,55 @@ void syscalls_base::fill_fmt_args(
         if (is_complete_value)
             value_str = this->parse_argument(drakvuf, info, sc->args[i], value);
 
+
+        if (is_complete_value && 
+            strcmp(sc->args[i].name, "ProcessHandle") == 0 && 
+            this->dereference_args != SYSCALLS_DEREFERENCE_ARGS_NONE)
+        {
+            addr_t handle_to_resolve = 0;
+
+            if (sc->args[i].type == HANDLE){
+                handle_to_resolve = value;
+            }
+            else if (sc->args[i].type == PHANDLE){
+                auto vmi = vmi_lock_guard(drakvuf);
+                ACCESS_CONTEXT(ctx,
+                    .translate_mechanism = VMI_TM_PROCESS_DTB,
+                    .dtb = info->regs->cr3,
+                    .addr = value
+                );
+                vmi_read_addr(vmi, &ctx, &handle_to_resolve); // handle error?
+            }
+
+            if (handle_to_resolve)
+            {
+                vmi_pid_t resolved_pid = 0;
+
+                if (drakvuf_get_pid_from_handle(drakvuf, info, handle_to_resolve, &resolved_pid))
+                {
+                    auto arg_name = std::string(sc->args[i].name) + std::string("_PID");
+
+                    if (resolved_pid != 0)
+                        fmt_args.emplace(arg_name, fmt::Xval((uint64_t)resolved_pid)); // eh cast
+                } 
+                else 
+                {
+                    PRINT_DEBUG("Get pid from handle failed");
+                }    
+            }
+            else 
+            {
+                PRINT_DEBUG("no handle to resolve");
+            }
+        }
+
+        
         auto type_info = arg_types.at(sc->args[i].type);
 
         if (value && is_complete_value &&
             type_info.is_ptr && type_info.ptr_for_type != Void &&
             this->dereference_args != SYSCALLS_DEREFERENCE_ARGS_NONE)
-        {
+        {   
             auto vmi = vmi_lock_guard(drakvuf);
             ACCESS_CONTEXT(ctx,
                 .translate_mechanism = VMI_TM_PROCESS_DTB,
@@ -175,9 +218,9 @@ void syscalls_base::fill_fmt_args(
         }
 
         if (value_str.empty())
-            fmt_args.emplace(sc->args[i].name, fmt::Xval(value));
+            fmt_args.emplace(std::string(sc->args[i].name), fmt::Xval(value));
         else
-            fmt_args.emplace(sc->args[i].name, fmt::Estr(value_str));
+            fmt_args.emplace(std::string(sc->args[i].name), fmt::Estr(value_str));
     }
 }
 
