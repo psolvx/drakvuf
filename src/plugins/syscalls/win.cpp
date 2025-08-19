@@ -824,10 +824,13 @@ void win_syscalls::print_syscall(
     bool is_ret, std::optional<uint32_t> status
 )
 {
-    info->trap->name = sc->name;
-
     fmt_args_t fmt_args;
-    fill_fmt_args(fmt_args, sc, info, args, is_ret, status.has_value() && *status == 0 /* STATUS_SUCCESS */ );
+
+    if (sc)
+    {
+        info->trap->name = sc->name;  
+        fill_fmt_args(fmt_args, sc, info, args, is_ret, status.has_value() && *status == 0 /* STATUS_SUCCESS */ );
+    }
 
     std::optional<fmt::Estr<std::string>> from_dll_opt, from_parent_dll_opt;
     std::optional<fmt::Rstr<const char*>> priv_mode_opt;

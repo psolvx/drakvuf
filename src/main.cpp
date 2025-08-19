@@ -603,8 +603,8 @@ int main(int argc, char** argv)
         {"json-clr", required_argument, NULL, opt_json_clr},
         {"json-mscorwks", required_argument, NULL, opt_json_mscorwks},
         {"syscall-dereference-args", required_argument, NULL, opt_syscall_dereference_args},
-        {"syscall-default-ret-cb", required_argument, NULL, opt_syscall_default_ret_cb},
-        {"syscall-resolve-pid", required_argument, NULL, opt_syscall_resolve_pid},
+        {"syscall-default-ret-cb", no_argument, NULL, opt_syscall_default_ret_cb},
+        {"syscall-resolve-pid", no_argument, NULL, opt_syscall_resolve_pid},
         {"syscall-hooks-list", required_argument, NULL, 'S'},
         {"procmon-envs-list", required_argument, NULL, 'q'},
         {"disable-sysret", no_argument, NULL, opt_disable_sysret},
@@ -791,8 +791,10 @@ int main(int argc, char** argv)
                 break;
             case opt_syscall_default_ret_cb:
                 options.syscalls_default_ret_cb = true;
+                break;
             case opt_syscall_resolve_pid:
                 options.syscalls_resolve_pid = true;
+                break;
 #endif
 #ifdef ENABLE_PLUGIN_PROCMON
             case 'q':
