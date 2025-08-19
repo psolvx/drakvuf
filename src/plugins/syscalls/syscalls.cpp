@@ -214,7 +214,7 @@ void syscalls_base::fill_fmt_args(
                 }
             }
             else
-                fprintf(stderr, "Failed to read value by address (%p)\n", (void*)value);
+                fprintf(stderr, "Failed to read value by address (%p), %s, %s\n", (void*)value, sc->name, sc->args[i].name);
         }
 
         if (value_str.empty())
