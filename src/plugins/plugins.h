@@ -168,6 +168,8 @@ struct plugins_options
     syscalls_dereference_args_t syscalls_dereference_args = SYSCALLS_DEREFERENCE_ARGS_NONE; // PLUGIN_SYSCALLS
     const char* syscalls_list_file;     // PLUGIN_SYSCALLS
     bool disable_sysret;                // PLUGIN_SYSCALLS
+    bool syscalls_default_ret_cb = false;        // PLUGIN_SYSCALLS
+    bool syscalls_resolve_pid = false;           // PLUGIN_SYSCALLS
     bool abort_on_bsod;                 // PLUGIN_BSODMON
     const char* crashdump_dir;          // PLUGIN_BSODMON
     const char* ntdll_profile;          // PLUGIN_LIBRARYMON

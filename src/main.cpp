@@ -250,6 +250,12 @@ static void print_usage()
         "\t -S, --syscall-hooks-list <syscalls filter>\n"
         "\t                           File with list of syscalls for trap in syscalls plugin (trap all if parameter is absent)\n"
         "\t --disable-sysret          Do not monitor syscall results\n"
+        "\t --syscall-dereference-args [\"add\"/\"replace\"]\n"
+        "\t                            Replace the original parameter value with dereferenced value or add a new field with \"*\" symbol prepended to the name.\n"
+        "\t                            Requires specifying \"SyscallName,retval\" in syscalls.txt or setting --syscall-default-ret-cb\n"
+        "\t --syscall-default-ret-cb\n"
+        "\t                           Use retval for every syscall with --syscall-dereference-args\n"
+        "\t --syscall-resolve-pid     Add ProcessHandle_PID output field where possible\n"
 #endif
 #ifdef ENABLE_PLUGIN_PROCMON
         "\t -q, --procmon-envs-list <procmon filter>\n"
@@ -505,6 +511,8 @@ int main(int argc, char** argv)
         opt_procdump_disable_kedelayexecutionthread_hook,
         opt_procdump_exclude_list,
         opt_syscall_dereference_args,
+        opt_syscall_default_ret_cb,
+        opt_syscall_resolve_pid,
         opt_json_clr,
         opt_json_mscorwks,
         opt_disable_sysret,
@@ -595,6 +603,8 @@ int main(int argc, char** argv)
         {"json-clr", required_argument, NULL, opt_json_clr},
         {"json-mscorwks", required_argument, NULL, opt_json_mscorwks},
         {"syscall-dereference-args", required_argument, NULL, opt_syscall_dereference_args},
+        {"syscall-default-ret-cb", required_argument, NULL, opt_syscall_default_ret_cb},
+        {"syscall-resolve-pid", required_argument, NULL, opt_syscall_resolve_pid},
         {"syscall-hooks-list", required_argument, NULL, 'S'},
         {"procmon-envs-list", required_argument, NULL, 'q'},
         {"disable-sysret", no_argument, NULL, opt_disable_sysret},
@@ -779,6 +789,10 @@ int main(int argc, char** argv)
                 else if (!strncmp(optarg, "none", 4))
                     options.syscalls_dereference_args = SYSCALLS_DEREFERENCE_ARGS_NONE;
                 break;
+            case opt_syscall_default_ret_cb:
+                options.syscalls_default_ret_cb = true;
+            case opt_syscall_resolve_pid:
+                options.syscalls_resolve_pid = true;
 #endif
 #ifdef ENABLE_PLUGIN_PROCMON
             case 'q':

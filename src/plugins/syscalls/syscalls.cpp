@@ -136,7 +136,7 @@ void syscalls_base::fill_fmt_args(
 
         if (is_complete_value && 
             strcmp(sc->args[i].name, "ProcessHandle") == 0 && 
-            this->dereference_args != SYSCALLS_DEREFERENCE_ARGS_NONE)
+            this->resolve_pid)
         {
             addr_t handle_to_resolve = 0;
 
@@ -324,7 +324,14 @@ bool syscalls_base::read_syscalls_list(const char* syscall_list_file)
         size_t pos = line.find(',');
         if (pos == std::string::npos)
         {
+            if (this->default_ret_cb)
+            {
+                this->syscall_list.emplace(line, true);
+            } 
+            else 
+            {
             this->syscall_list.emplace(line, false);
+            }
             continue;
         }
 
@@ -347,6 +354,9 @@ syscalls_base::syscalls_base(drakvuf_t drakvuf, const syscalls_config* config, o
     this->is32bit = (drakvuf_get_page_mode(drakvuf) != VMI_PM_IA32E);
     this->disable_sysret = config->disable_sysret;
     this->dereference_args = config->syscalls_dereference_args;
+    this->default_ret_cb = config->syscalls_default_ret_cb;
+    this->resolve_pid = config->syscalls_resolve_pid;
+
 
     if (config->syscalls_list_file && !this->read_syscalls_list(config->syscalls_list_file))
         throw -1;

@@ -119,6 +119,8 @@ struct syscalls_config
     const char* win32k_profile;
     bool disable_sysret;
     syscalls_dereference_args_t syscalls_dereference_args;
+    bool syscalls_default_ret_cb;
+    bool syscalls_resolve_pid;
 };
 
 // internal syscalls class
@@ -131,6 +133,8 @@ public:
     bool is32bit;
     bool disable_sysret;
     syscalls_dereference_args_t dereference_args;
+    bool default_ret_cb;
+    bool resolve_pid;
 
     std::unordered_map<std::string, bool> syscall_list; // name -> is_ret
 
