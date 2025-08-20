@@ -1921,7 +1921,7 @@ bool win_get_tid_from_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_
 }
 
 
-static bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t handle, vmi_pid_t* pid)
+bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t handle, vmi_pid_t* pid)
 {
     if (!info->proc_data.base_addr || !pid)
         return false;
@@ -1934,7 +1934,6 @@ static bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_
 
     addr_t kthread = ethread + drakvuf->offsets[ETHREAD_TCB];
 
-    auto vmi = vmi_lock_guard(drakvuf);
     addr_t eprocess = 0;
     addr_t eprocess_ptr_addr = kthread + drakvuf->offsets[KTHREAD_PROCESS];
 
@@ -1944,7 +1943,7 @@ static bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_
         .addr = eprocess_ptr_addr,
     );
 
-    if (VMI_SUCCESS != vmi_read_addr(vmi, &ctx, &eprocess)) {
+    if (VMI_SUCCESS != vmi_read_addr(drakvuf->vmi, &ctx, &eprocess)) {
         return false;
     }
 
