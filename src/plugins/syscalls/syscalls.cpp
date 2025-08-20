@@ -150,7 +150,7 @@ void syscalls_base::fill_fmt_args(
                     .dtb = info->regs->cr3,
                     .addr = value
                 );
-                vmi_read_addr(vmi, &ctx, &handle_to_resolve); // handle error?
+                vmi_read_addr(vmi, &ctx, &handle_to_resolve);
             }
 
             if (handle_to_resolve)
@@ -162,12 +162,67 @@ void syscalls_base::fill_fmt_args(
                     auto arg_name = std::string(sc->args[i].name) + std::string("_PID");
 
                     if (resolved_pid != 0)
-                        fmt_args.emplace(arg_name, fmt::Xval((uint64_t)resolved_pid)); // eh cast
+                        fmt_args.emplace(arg_name, fmt::Xval((uint64_t)resolved_pid));
                 } 
                 else 
                 {
                     PRINT_DEBUG("Get pid from handle failed");
                 }    
+            }
+            else 
+            {
+                PRINT_DEBUG("no handle to resolve");
+            }
+        }
+
+
+        if (is_complete_value && 
+            strcmp(sc->args[i].name, "ThreadHandle") == 0 && 
+            this->resolve_pid)
+        {
+            addr_t handle_to_resolve = 0;
+
+            if (sc->args[i].type == HANDLE){
+                handle_to_resolve = value;
+            }
+            else if (sc->args[i].type == PHANDLE){
+                auto vmi = vmi_lock_guard(drakvuf);
+                ACCESS_CONTEXT(ctx,
+                    .translate_mechanism = VMI_TM_PROCESS_DTB,
+                    .dtb = info->regs->cr3,
+                    .addr = value
+                );
+                vmi_read_addr(vmi, &ctx, &handle_to_resolve);
+            }
+
+            if (handle_to_resolve)
+            {
+                vmi_pid_t resolved_pid = 0;
+                uint32_t resolved_tid = 0;
+
+                if (drakvuf_get_tid_from_handle(drakvuf, info, handle_to_resolve, &resolved_tid))
+                {
+                    auto arg_name = std::string(sc->args[i].name) + std::string("_TID");
+
+                    if (resolved_tid != 0)
+                        fmt_args.emplace(arg_name, fmt::Xval((uint64_t)resolved_tid));
+                } 
+                else 
+                {
+                    PRINT_DEBUG("Get tid from handle failed");
+                }
+
+                if (drakvuf_get_pid_from_thread_handle(drakvuf, info, handle_to_resolve, &resolved_pid))
+                {
+                    auto arg_name = std::string(sc->args[i].name) + std::string("_PID");
+
+                    if (resolved_pid != 0)
+                        fmt_args.emplace(arg_name, fmt::Xval((uint64_t)resolved_pid));
+                } 
+                else 
+                {
+                    PRINT_DEBUG("Get tid from handle failed");
+                } 
             }
             else 
             {
