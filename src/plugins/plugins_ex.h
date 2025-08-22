@@ -302,6 +302,40 @@ struct breakpoint_by_dtb_searcher
         return *this;
     }
 
+
+    static addr_t get_syscall_retaddr(drakvuf_t drakvuf, drakvuf_trap_info_t* info, privilege_mode_t mode)
+    {
+        vmi_lock_guard vmi(drakvuf);
+
+        if (mode == MAXIMUM_MODE)
+        {
+            return 0;
+        }
+        if (mode == KERNEL_MODE)
+        {
+            // Read return address.
+            //
+            return drakvuf_get_function_return_address(drakvuf, info);
+        }
+        // Read usermode address.
+        //
+        // The qword at offset 0x28 - return address to usermode:
+        // -0x00:  mov     rsp, gs:1A8h
+        // -0x08:  push    2Bh
+        // -0x10:  push    qword ptr gs:10h
+        // -0x18:  push    r11
+        // -0x20:  push    33h
+        // -0x28:  push    rcx
+        // -0x28:  mov     rcx, r10
+        // -0x30:  sub     rsp, 8
+        // -0x38:  push    rbp
+        // -0x190: sub     rsp, 158h
+        //
+        addr_t user_ret_addr{};
+        vmi_read_addr_va(vmi, drakvuf_get_rspbase(drakvuf, info) - 0x28, 0, &user_ret_addr);
+        return user_ret_addr;
+    }
+
     drakvuf_trap_t* operator()(drakvuf_t drakvuf, drakvuf_trap_info_t* info, drakvuf_trap_t* trap) const
     {
         if (trap)
@@ -311,9 +345,16 @@ struct breakpoint_by_dtb_searcher
             addr_t addr = m_addr;
             if (!addr)
             {
-                addr = drakvuf_get_function_return_address(drakvuf, info);
-                if (!addr)
-                    return nullptr;
+                privilege_mode_t mode = MAXIMUM_MODE;
+                if (!drakvuf_get_current_thread_previous_mode(drakvuf, info, &mode))
+                {
+                    addr = drakvuf_get_function_return_address(drakvuf, info);
+                    PRINT_DEBUG("[SYSCALLS] Failed to get previous mode\n");
+                }
+                else {
+                addr = get_syscall_retaddr(drakvuf, info, mode);
+                }
+
             }
 
             addr_t dtb = m_dtb;
@@ -325,6 +366,12 @@ struct breakpoint_by_dtb_searcher
                     return nullptr;
             }
 
+            //addr_t pid_dtb = 0;
+            //drakvuf_get_process_dtb(drakvuf, info->proc_data.base_addr, &pid_dtb);
+            //addr_t pid_dtb2 = 0;
+            //drakvuf_get_process_dtb(drakvuf, info->attached_proc_data.base_addr, &pid_dtb2);
+
+            PRINT_DEBUG("dtb searcher trap with addr: %lx dtb: %lx\n", addr, dtb);
             trap->type = BREAKPOINT;
             trap->breakpoint.lookup_type = LOOKUP_DTB;
             trap->breakpoint.dtb = dtb;

@@ -133,7 +133,7 @@ void syscalls_base::fill_fmt_args(
         if (is_complete_value)
             value_str = this->parse_argument(drakvuf, info, sc->args[i], value);
 
-
+        // Resolve ProcessHandle
         if (is_complete_value && 
             strcmp(sc->args[i].name, "ProcessHandle") == 0 && 
             this->resolve_pid)
@@ -166,16 +166,16 @@ void syscalls_base::fill_fmt_args(
                 } 
                 else 
                 {
-                    PRINT_DEBUG("Get pid from handle failed");
+                    PRINT_DEBUG("Get pid from handle failed for value %lx\n", handle_to_resolve);
                 }    
             }
             else 
             {
-                PRINT_DEBUG("no handle to resolve");
+                PRINT_DEBUG("no handle to resolve\n");
             }
         }
 
-
+        // Resolve ThreadHandle
         if (is_complete_value && 
             strcmp(sc->args[i].name, "ThreadHandle") == 0 && 
             this->resolve_pid)
@@ -209,7 +209,7 @@ void syscalls_base::fill_fmt_args(
                 } 
                 else 
                 {
-                    PRINT_DEBUG("Get tid from handle failed");
+                    PRINT_DEBUG("Get tid from handle failed for value %lx\n", handle_to_resolve);
                 }
 
                 if (drakvuf_get_pid_from_thread_handle(drakvuf, info, handle_to_resolve, &resolved_pid))
@@ -221,12 +221,12 @@ void syscalls_base::fill_fmt_args(
                 } 
                 else 
                 {
-                    PRINT_DEBUG("Get tid from handle failed");
+                    PRINT_DEBUG("Get pid from thread handle failed for value %lx\n", handle_to_resolve);
                 } 
             }
             else 
             {
-                PRINT_DEBUG("no handle to resolve");
+                PRINT_DEBUG("no handle to resolve\n");
             }
         }
 

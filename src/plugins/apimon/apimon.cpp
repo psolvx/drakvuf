@@ -193,8 +193,9 @@ event_response_t apimon::usermode_return_hook_cb(drakvuf_t drakvuf, drakvuf_trap
     auto params = libhook::GetTrapParams<ApimonReturnHookData>(info);
 
     if (!params->verifyResultCallParams(drakvuf, info))
+        PRINT_DEBUG("apimon verify result call params failed\n");
         return VMI_EVENT_RESPONSE_NONE;
-
+    PRINT_DEBUG("apimon verify result call params succeeded\n");
     usermode_print(info, params->arguments, params->target);
 
     auto hookID = make_hook_id(info, params->target_rsp);

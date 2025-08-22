@@ -150,7 +150,9 @@ static event_response_t sysret_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
 
     //Verifies that the params we got above (preset by the previous trap) match the trap_information this cb got called with.
     if (!wr->verify_result_call_params(drakvuf, info))
+        //PRINT_DEBUG("Verify result call params failed\n");
         return VMI_EVENT_RESPONSE_NONE;
+    //PRINT_DEBUG("Verify result call params succeeded\n");
 
     char exit_status_buf[NTSTATUS_MAX_FORMAT_STR_SIZE] = {0};
     const char* exit_status_str = ntstatus_to_string(ntstatus_t(info->regs->rax));
@@ -378,8 +380,12 @@ static event_response_t syscall_ret_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* i
     auto wr = get_trap_params<windows_syscall_trap_data_t>(info);
 
     //Verifies that the params we got above (preset by the previous trap) match the trap_information this cb got called with.
-    if (!wr->verify_result_call_params(drakvuf, info))
+
+    if (!wr->verify_result_call_params(drakvuf, info)){
+        PRINT_DEBUG("Verify result call params failed in cr3 %lx\n", info->regs->cr3);
         return VMI_EVENT_RESPONSE_NONE;
+    }
+    PRINT_DEBUG("Verify result call params succeeded in cr3 %lx\n", info->regs->cr3);
 
     uint32_t status = (uint32_t)info->regs->rax; // NTSTATUS
 
@@ -400,11 +406,29 @@ static event_response_t syscall_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
     const syscall_t* sc = w->sc;
     auto num_args = sc ? sc->num_args : 0;
 
+    addr_t dtb;
+    if(!drakvuf_get_process_dtb(drakvuf, info->proc_data.base_addr, &dtb)){
+        PRINT_DEBUG("failed to read dtb");
+    }
+    addr_t dtb2;
+    if (!drakvuf_get_process_dtb(drakvuf, info->attached_proc_data.base_addr, &dtb2)){
+        PRINT_DEBUG("Failed to read dtb2");
+    }
+
+    PRINT_DEBUG("[CONTEXT_TEST] Current CR3: 0x%lx, proc_data PID: %u, dtb: %lx, attached_proc_data PID: %u dtb: %lx\n",
+            info->regs->cr3,
+            info->proc_data.pid,
+            dtb,
+            info->attached_proc_data.pid,
+            dtb2
+        );
+
+
     auto args = extract_args(drakvuf, info, s->register_size, num_args);
     auto [mode, module, parent_module] = get_syscall_retinfo(drakvuf, info, s);
 
-    if (!w->is_ret)
-        s->print_syscall(drakvuf, info, w->num, w->type, sc, args, mode, module, parent_module, w->is_ret, {});
+    //if (!w->is_ret)
+    s->print_syscall(drakvuf, info, w->num, w->type, sc, args, mode, module, parent_module, w->is_ret, {});
 
     if ((!w->is_ret && s->disable_sysret) || s->is_stopping())
         return VMI_EVENT_RESPONSE_NONE;
@@ -430,7 +454,20 @@ static event_response_t syscall_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
     auto wr = get_trap_params<windows_syscall_trap_data_t>(trap);
 
     //Save the address of the target thread, address of the rsp (this was the rip-address, which we used for construction) and the value of the CR3 register to the params.
-    wr->set_result_call_params(info);
+    
+    if (mode == USER_MODE){
+    addr_t user_rsp = 0;
+        
+        if (!drakvuf_get_user_rsp(drakvuf, info, &user_rsp)){
+            PRINT_DEBUG("Failed to get user rsp");
+        }
+        PRINT_DEBUG("user rsp: %lx\n", user_rsp);
+        wr->set_result_call_params(info, user_rsp); 
+    }
+    else
+    {
+        wr->set_result_call_params(info);
+    }
 
     //enrich the params of the new/next trap. This information is used later.
     wr->num = w->num;

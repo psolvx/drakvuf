@@ -661,6 +661,7 @@ void win_set_return_context(drakvuf_t drakvuf __attribute__((unused)), drakvuf_t
 
 bool win_check_return_context(drakvuf_trap_info_t* info, vmi_pid_t pid, uint32_t tid, addr_t rsp)
 {
+    PRINT_DEBUG("verify context: vcpu %x, pid %x %x, tid %x %x, rsp %lx %lx\n", info->vcpu, info->attached_proc_data.pid, pid, info->attached_proc_data.tid, tid, info->regs->rsp, rsp);
     return (info->attached_proc_data.pid == pid)
         && (info->attached_proc_data.tid == tid)
         && (!rsp || info->regs->rsp >= rsp);
@@ -793,6 +794,7 @@ bool set_os_windows(drakvuf_t drakvuf)
     drakvuf->osi.get_object_type_name = win_get_object_type_name;
     drakvuf->osi.get_object_name = win_get_object_name;
     drakvuf->osi.get_object_type_index = win_get_object_type_index;
+    drakvuf->osi.get_user_rsp = win_get_user_rsp;
 
     return true;
 }

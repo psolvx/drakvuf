@@ -194,6 +194,47 @@ static bool win_get_current_kpcr(drakvuf_t drakvuf, drakvuf_trap_info_t* info, a
     return true;
 }
 
+
+
+bool win_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user_rsp)
+{
+    if (!user_rsp)
+        return false;
+
+
+    vmi_instance_t vmi = drakvuf->vmi;
+    addr_t kpcr = 0;
+    addr_t pcrb = 0;
+
+    if (!win_get_current_kpcr(drakvuf, info, &kpcr, &pcrb))
+    {
+        PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: FAILED to get KPCR base address.\n");
+        return false;
+    }
+
+    PRINT_DEBUG("[SYSCALLS] KPCR address is: 0x%lx\n", kpcr);
+    
+    addr_t kpcr_self_test = 0;
+    vmi_read_addr_va(vmi, kpcr + 0x18, 0, &kpcr_self_test);
+    PRINT_DEBUG("[SYSCALLS] KPCR self-pointer sanity check: 0x%lx (should match KPCR addr)\n", kpcr_self_test);
+
+    addr_t kpcr_user_rsp_addr = kpcr + 0x10;
+
+    addr_t read_rsp = 0;
+
+    status_t read_status = vmi_read_addr_va(vmi, kpcr_user_rsp_addr, 0, &read_rsp);
+
+    if (VMI_SUCCESS != read_status)
+    {
+        PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: vmi_read_addr_va FAILED with status %d for address 0x%lx\n", read_status, kpcr_user_rsp_addr);
+        return false;
+    }
+    
+    *user_rsp = read_rsp;
+    PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: Successfully read user RSP: 0x%lx\n", read_rsp);
+    return true;
+}
+
 bool win_get_current_irql(drakvuf_t drakvuf, drakvuf_trap_info_t* info, uint8_t* irql)
 {
     vmi_instance_t vmi = drakvuf->vmi;
@@ -1899,7 +1940,7 @@ bool win_get_pid_from_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_
 
 bool win_get_tid_from_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t handle, uint32_t* tid)
 {
-    if (handle == 0 || handle == UINT64_MAX)
+    if (handle == 0 || handle == UINT64_MAX - 1)
     {
         *tid = info->proc_data.tid;
         return false;
@@ -1923,6 +1964,12 @@ bool win_get_tid_from_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_
 
 bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t handle, vmi_pid_t* pid)
 {
+    if (handle == 0 || handle == UINT64_MAX - 1)
+    {
+        *pid = info->proc_data.pid;
+        return false;
+    }
+
     if (!info->proc_data.base_addr || !pid)
         return false;
 

@@ -1247,3 +1247,17 @@ unicode_string_t* drakvuf_get_object_type_name(drakvuf_t drakvuf, addr_t object)
 
     return ret;
 }
+
+bool drakvuf_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user_rsp)
+{
+    bool ret = false;
+
+    if ( drakvuf->osi.get_user_rsp )
+    {
+        drakvuf_lock_and_get_vmi(drakvuf);
+        ret = drakvuf->osi.get_user_rsp(drakvuf, info, user_rsp);
+        drakvuf_release_vmi(drakvuf);
+    }
+
+    return ret;
+}
