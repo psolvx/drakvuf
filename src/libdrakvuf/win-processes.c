@@ -204,9 +204,9 @@ bool win_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user
 
     vmi_instance_t vmi = drakvuf->vmi;
     addr_t kpcr = 0;
-    addr_t pcrb = 0;
+    addr_t prcb = 0;
 
-    if (!win_get_current_kpcr(drakvuf, info, &kpcr, &pcrb))
+    if (!win_get_current_kpcr(drakvuf, info, &kpcr, &prcb))
     {
         PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: FAILED to get KPCR base address.\n");
         return false;
@@ -218,15 +218,13 @@ bool win_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user
     vmi_read_addr_va(vmi, kpcr + 0x18, 0, &kpcr_self_test);
     PRINT_DEBUG("[SYSCALLS] KPCR self-pointer sanity check: 0x%lx (should match KPCR addr)\n", kpcr_self_test);
 
-    addr_t kpcr_user_rsp_addr = kpcr + 0x10;
-
     addr_t read_rsp = 0;
 
-    status_t read_status = vmi_read_addr_va(vmi, kpcr_user_rsp_addr, 0, &read_rsp);
+    status_t read_status = vmi_read_addr_va(vmi, kpcr + prcb + 0x8e90, 0, &read_rsp);
 
     if (VMI_SUCCESS != read_status)
     {
-        PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: vmi_read_addr_va FAILED with status %d for address 0x%lx\n", read_status, kpcr_user_rsp_addr);
+        PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: vmi_read_addr_va FAILED with status %d\n", read_status);
         return false;
     }
     

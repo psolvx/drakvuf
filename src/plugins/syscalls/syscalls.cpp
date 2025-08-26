@@ -294,9 +294,19 @@ void syscalls_base::print_sysret(drakvuf_t drakvuf, drakvuf_trap_info_t* info, i
 std::string syscalls_base::parse_argument(drakvuf_t drakvuf, drakvuf_trap_info_t* info, const arg_t& arg, addr_t val)
 {
     char* cstr = nullptr;
-
     switch (arg.type)
     {
+        case PCONTEXT:
+        {
+            auto vmi = drakvuf_lock_and_get_vmi(drakvuf);
+            addr_t rip = 0;
+            addr_t rcx = 0;
+            size_t bytes_read;
+            // rip offset in CONTEXT = 0xf8
+            vmi_read_va(vmi, val + 0xf8, info->attached_proc_data.pid, 8, &rip, &bytes_read);
+            vmi_read_va(vmi, val + 0x80, info->attached_proc_data.pid, 8, &rcx, &bytes_read);
+            return std::string("rip: ") + std::to_string(rip) + std::string(" rcx: ") + std::to_string(rcx);
+        }
         case PUNICODE_STRING:
         {
             unicode_string_t* us = drakvuf_read_unicode(drakvuf, info, val);

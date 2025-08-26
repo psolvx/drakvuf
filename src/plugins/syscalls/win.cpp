@@ -382,10 +382,10 @@ static event_response_t syscall_ret_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* i
     //Verifies that the params we got above (preset by the previous trap) match the trap_information this cb got called with.
 
     if (!wr->verify_result_call_params(drakvuf, info)){
-        PRINT_DEBUG("Verify result call params failed in cr3 %lx\n", info->regs->cr3);
+        PRINT_DEBUG("[SYSCALLS DEBUG] Verify result call params failed in cr3 %lx\n", info->regs->cr3);
         return VMI_EVENT_RESPONSE_NONE;
     }
-    PRINT_DEBUG("Verify result call params succeeded in cr3 %lx\n", info->regs->cr3);
+    PRINT_DEBUG("[SYSCALLS DEBUG] Verify result call params succeeded in cr3 %lx\n", info->regs->cr3);
 
     uint32_t status = (uint32_t)info->regs->rax; // NTSTATUS
 
@@ -430,7 +430,7 @@ static event_response_t syscall_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
     //if (!w->is_ret)
     s->print_syscall(drakvuf, info, w->num, w->type, sc, args, mode, module, parent_module, w->is_ret, {});
 
-    if ((!w->is_ret && s->disable_sysret) || s->is_stopping())
+    if ((!w->is_ret && s->disable_sysret) || s->is_stopping() )
         return VMI_EVENT_RESPONSE_NONE;
 
     addr_t ret_addr = drakvuf_get_function_return_address(drakvuf, info);
@@ -456,24 +456,27 @@ static event_response_t syscall_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
     //Save the address of the target thread, address of the rsp (this was the rip-address, which we used for construction) and the value of the CR3 register to the params.
     
     if (mode == USER_MODE){
-    addr_t user_rsp = 0;
+        addr_t user_rsp = 0;
         
         if (!drakvuf_get_user_rsp(drakvuf, info, &user_rsp)){
             PRINT_DEBUG("Failed to get user rsp");
         }
-        PRINT_DEBUG("user rsp: %lx\n", user_rsp);
-        wr->set_result_call_params(info, user_rsp); 
+        PRINT_DEBUG("[SYSCALLS DEBUG] setting trap with user rsp: %lx, module/type: %s\n", user_rsp, w->type);
+        wr->set_result_call_params(info, user_rsp);
+        wr->mode = USER_MODE;
     }
     else
     {
         wr->set_result_call_params(info);
+        PRINT_DEBUG("[SYSCALLS DEBUG] setting trap with kernel rsp: %lx, module/type %s\n", info->regs->rsp, w->type);
+        wr->mode = w->mode;
     }
 
     //enrich the params of the new/next trap. This information is used later.
     wr->num = w->num;
     wr->type = w->type;
     wr->sc = w->sc;
-    wr->mode = w->mode;
+
 
     wr->args = std::move(args);
     wr->is_ret = w->is_ret;
