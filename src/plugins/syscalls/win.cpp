@@ -371,6 +371,12 @@ static std::tuple<privilege_mode_t, std::optional<std::string>, std::optional<st
     return { MAXIMUM_MODE, {}, {} };
 }
 
+static event_response_t do_nothing_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
+{
+    PRINT_DEBUG("[SYSCALLS DEBUG] do nothing callback hit");
+    return VMI_EVENT_RESPONSE_NONE;
+}
+
 static event_response_t syscall_ret_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info)
 {
     //Loads a pointer to the plugin, which is responsible for the trap
@@ -382,15 +388,16 @@ static event_response_t syscall_ret_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* i
     //Verifies that the params we got above (preset by the previous trap) match the trap_information this cb got called with.
 
     if (!wr->verify_result_call_params(drakvuf, info)){
-        PRINT_DEBUG("[SYSCALLS DEBUG] Verify result call params failed in cr3 %lx\n", info->regs->cr3);
+        PRINT_DEBUG("[SYSCALLS DEBUG] verify failed: cr3 %lx, vcpu %x, pid %x == %x, tid %x == %x, rsp %lx >= %lx trap data: mode %x module %s parent module %s\n", info->regs->cr3, info->vcpu, info->attached_proc_data.pid, wr->target_pid, info->attached_proc_data.tid, wr->target_tid, info->regs->rsp, wr->target_rsp, wr->mode, wr->module.value_or(std::string("none")).c_str(), wr->parent_module.value_or(std::string("none")).c_str());
+    
         return VMI_EVENT_RESPONSE_NONE;
     }
-    PRINT_DEBUG("[SYSCALLS DEBUG] Verify result call params succeeded in cr3 %lx\n", info->regs->cr3);
+    PRINT_DEBUG("[SYSCALLS DEBUG] verify succeeded: cr3 %lx, vcpu %x, pid %x == %x, tid %x == %x, rsp %lx >= %lx trap data: mode %x module %s parent module %s\n", info->regs->cr3, info->vcpu, info->attached_proc_data.pid, wr->target_pid, info->attached_proc_data.tid, wr->target_tid, info->regs->rsp, wr->target_rsp,wr->mode, wr->module.value_or(std::string("none")).c_str(), wr->parent_module.value_or(std::string("none")).c_str());
 
     uint32_t status = (uint32_t)info->regs->rax; // NTSTATUS
+    info->trap->cb = do_nothing_cb;
 
     s->print_syscall(drakvuf, info, wr->num, wr->type, wr->sc, wr->args, wr->mode, wr->module, wr->parent_module, wr->is_ret, status);
-
     //Destroys this return trap, because it is specific for the RIP and not usable anymore. This was the trap being called when the physical address got computed.
     //Deletes this trap from the list of existing traps traps
     //Additionally removes the trap and frees the memory
