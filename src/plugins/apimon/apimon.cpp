@@ -191,14 +191,17 @@ void apimon::usermode_print(drakvuf_trap_info* info, std::vector<uint64_t>& args
 event_response_t apimon::usermode_return_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* info)
 {
     auto params = libhook::GetTrapParams<ApimonReturnHookData>(info);
+    auto hookID = make_hook_id(info, params->target_rsp);
+    PRINT_DEBUG("[APIMON] usermode return hook hit at %lx, hook id %lx %lx\n", info->regs->rip, hookID.first, hookID.second);
 
-    if (!params->verifyResultCallParams(drakvuf, info))
-        PRINT_DEBUG("apimon verify result call params failed\n");
+    if (!params->verifyResultCallParams(drakvuf, info)){
+        PRINT_DEBUG("[APIMON] verify result call params failed\n");
         return VMI_EVENT_RESPONSE_NONE;
-    PRINT_DEBUG("apimon verify result call params succeeded\n");
+    }
+    PRINT_DEBUG("[APIMON] verify result call params succeeded\n");
     usermode_print(info, params->arguments, params->target);
 
-    auto hookID = make_hook_id(info, params->target_rsp);
+    PRINT_DEBUG("[APIMON] erasing hook id %lx %lx\n", hookID.first, hookID.second);
     ret_hooks.erase(hookID);
 
     return VMI_EVENT_RESPONSE_NONE;
@@ -255,6 +258,8 @@ static event_response_t usermode_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* i
         params->target = target;
 
         plugin->ret_hooks[hookID] = std::move(hook);
+        PRINT_DEBUG("[APIMON] usermode hook hit at 0x%lx, return address: %lx, hook id %lx %lx\n", info->regs->rip, ret_addr, hookID.first, hookID.second);
+    
     }
 
     return VMI_EVENT_RESPONSE_NONE;

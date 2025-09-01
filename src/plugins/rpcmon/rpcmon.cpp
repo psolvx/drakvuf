@@ -349,7 +349,7 @@ static std::optional<rpc_message_t> parse_RPC_MESSAGE(drakvuf_t drakvuf, drakvuf
 event_response_t rpcmon::usermode_return_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* info)
 {
     auto params = libhook::GetTrapParams<RpcmonReturnHookData>(info);
-
+    PRINT_DEBUG("[RPCMON] usermode return hook hit at %lx\n", info->regs->rip);
     if (!params->verifyResultCallParams(drakvuf, info))
         return VMI_EVENT_RESPONSE_NONE;
 
@@ -409,6 +409,7 @@ event_response_t rpcmon::usermode_return_hook_cb(drakvuf_t drakvuf, drakvuf_trap
     );
 
     auto hookID = make_hook_id(info, params->target_rsp);
+    PRINT_DEBUG("erasing hook id %lx %lx\n", hookID.first, hookID.second);
     ret_hooks.erase(hookID);
 
     return VMI_EVENT_RESPONSE_NONE;
@@ -459,6 +460,9 @@ static event_response_t usermode_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* i
 
     auto hookID = make_hook_id(info, params->target_rsp);
     plugin->ret_hooks[hookID] = std::move(hook);
+
+    PRINT_DEBUG("[RPCMON] usermode hook hit at 0x%lx, return address: %lx, hook id %lx %lx\n", info->regs->rip, ret_addr, hookID.first, hookID.second);
+    
 
     return VMI_EVENT_RESPONSE_NONE;
 }
