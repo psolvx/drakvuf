@@ -216,12 +216,6 @@ struct DataPrinter
         return printed;
     }
 
-    template <class Tv = T>
-    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
-    {
-        return data.has_value() && print_data(os, data.value(), sep);
-    }
-
     template <class Tk, class Tv>
     static bool print(std::ostream& os, const std::pair<Tk, Tv>& data, char)
     {
@@ -241,6 +235,29 @@ struct DataPrinter
         {
             return print_data(os, arg, sep);
         }, data);
+    }
+
+    static bool print(std::ostream& os, const fmt::Subkey& data, char sep)
+    {
+        // CSV is flat and cannot represent nested objects. This shouldn't happen.
+        os << "\"[OBJECT]\"";
+        return true;
+    }
+};
+
+template <typename Tv>
+class DataPrinter<std::optional<Tv>>
+{
+public:
+    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
+    {
+        if (!data)
+        {
+            // Print an empty field to maintain column alignment
+            os << "\"\"";
+            return true;
+        }
+        return DataPrinter<Tv>::print(os, *data, sep);
     }
 };
 

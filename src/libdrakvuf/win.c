@@ -664,15 +664,18 @@ bool win_check_return_context(drakvuf_trap_info_t* info, vmi_pid_t pid, uint32_t
     PRINT_DEBUG("[DEBUG] verify context: vcpu %x, pid %x == %x, tid %x == %x, rsp %lx >= %lx\n", info->vcpu, info->attached_proc_data.pid, pid, info->attached_proc_data.tid, tid, info->regs->rsp, rsp);
     if ((info->attached_proc_data.pid == pid)
         && (info->attached_proc_data.tid == tid)
-        && ((info->regs->rsp >= rsp) || !rsp)){
-            PRINT_DEBUG("[DEBUG] verify success\n");
-        } else{
-            PRINT_DEBUG("[DEBUG] verify fail\n");
-        }
-        
-        return ((info->attached_proc_data.pid == pid)
-        && (info->attached_proc_data.tid == tid)
-        && ((info->regs->rsp >= rsp) || !rsp));
+        && (!rsp || (info->regs->rsp >= rsp)))
+    {
+        PRINT_DEBUG("[DEBUG] verify success\n");
+    }
+    else
+    {
+        PRINT_DEBUG("[DEBUG] verify fail\n");
+    }
+
+    return ((info->attached_proc_data.pid == pid)
+            && (info->attached_proc_data.tid == tid)
+            && (!rsp || (info->regs->rsp >= rsp)));
 }
 
 bool win_get_kernel_symbol_rva(drakvuf_t drakvuf, const char* function, addr_t* rva)

@@ -194,7 +194,8 @@ event_response_t apimon::usermode_return_hook_cb(drakvuf_t drakvuf, drakvuf_trap
     auto hookID = make_hook_id(info, params->target_rsp);
     PRINT_DEBUG("[APIMON] usermode return hook hit at %lx, hook id %lx %lx\n", info->regs->rip, hookID.first, hookID.second);
 
-    if (!params->verifyResultCallParams(drakvuf, info)){
+    if (!params->verifyResultCallParams(drakvuf, info))
+    {
         PRINT_DEBUG("[APIMON] verify result call params failed\n");
         return VMI_EVENT_RESPONSE_NONE;
     }
@@ -259,7 +260,7 @@ static event_response_t usermode_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* i
 
         plugin->ret_hooks[hookID] = std::move(hook);
         PRINT_DEBUG("[APIMON] usermode hook hit at 0x%lx, return address: %lx, hook id %lx %lx\n", info->regs->rip, ret_addr, hookID.first, hookID.second);
-    
+
     }
 
     return VMI_EVENT_RESPONSE_NONE;

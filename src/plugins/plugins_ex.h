@@ -351,8 +351,9 @@ struct breakpoint_by_dtb_searcher
                     addr = drakvuf_get_function_return_address(drakvuf, info);
                     PRINT_DEBUG("[SYSCALLS] Failed to get previous mode\n");
                 }
-                else {
-                addr = get_syscall_retaddr(drakvuf, info, mode);
+                else
+                {
+                    addr = get_syscall_retaddr(drakvuf, info, mode);
                 }
 
             }

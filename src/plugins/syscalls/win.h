@@ -134,7 +134,6 @@ public:
     event_response_t delete_process_cb(drakvuf_t drakvuf, drakvuf_trap_info_t* info);
 
     bool trap_syscall_table_entries(drakvuf_t drakvuf, vmi_instance_t vmi, addr_t cr3, bool ntos, addr_t base, std::array<addr_t, 2> _sst, json_object* json);
-    virtual char* win_extract_string(drakvuf_t drakvuf, drakvuf_trap_info_t* info, const syscalls_ns::arg_t& arg, addr_t val);
 
     void print_syscall(
         drakvuf_t drakvuf, drakvuf_trap_info_t* info,
@@ -146,6 +145,14 @@ public:
 
     win_syscalls(drakvuf_t drakvuf, const syscalls_config* config, output_format_t output);
     ~win_syscalls();
+
+protected:
+    void register_parsers() override;
+
+    void parse_handle_for_pid_tid(
+        fmt_args_t& fmt_args, const syscalls_ns::arg_t& arg, drakvuf_trap_info_t* info,
+        uint64_t value, bool resolve_pid, bool resolve_tid
+    );
 };
 
 namespace syscalls_ns
@@ -379,17 +386,17 @@ SYSCALL(NtAlpcAcceptConnectPort, NTSTATUS,
     "AcceptConnection", "", DIR_IN, BOOLEAN,
 );
 SYSCALL(NtAlpcConnectPortEx, NTSTATUS,
-"PortHandle", "", DIR_OUT, PHANDLE,
-"ConnectionPortObjectAttributes", "", DIR_IN, POBJECT_ATTRIBUTES,
-"ClientPortObjectAttributes", "opt", DIR_IN, POBJECT_ATTRIBUTES,
-"PortAttributes", "opt", DIR_IN, PALPC_PORT_ATTRIBUTES,
-"Flags", "", DIR_IN, ULONG,
-"ServerSecurityRequirements", "opt", DIR_IN, PSECURITY_DESCRIPTOR,
-"ConnectionMessage", "opt", DIR_INOUT, PPORT_MESSAGE,
-"BufferLength", "opt", DIR_INOUT, PSIZE_T,
-"OutMessageAttributes", "opt", DIR_INOUT, PALPC_MESSAGE_ATTRIBUTES,
-"InMessageAttributes", "opt", DIR_INOUT, PALPC_MESSAGE_ATTRIBUTES,
-"Timeout", "opt", DIR_IN, PLARGE_INTEGER,
+    "PortHandle", "", DIR_OUT, PHANDLE,
+    "ConnectionPortObjectAttributes", "", DIR_IN, POBJECT_ATTRIBUTES,
+    "ClientPortObjectAttributes", "opt", DIR_IN, POBJECT_ATTRIBUTES,
+    "PortAttributes", "opt", DIR_IN, PALPC_PORT_ATTRIBUTES,
+    "Flags", "", DIR_IN, ULONG,
+    "ServerSecurityRequirements", "opt", DIR_IN, PSECURITY_DESCRIPTOR,
+    "ConnectionMessage", "opt", DIR_INOUT, PPORT_MESSAGE,
+    "BufferLength", "opt", DIR_INOUT, PSIZE_T,
+    "OutMessageAttributes", "opt", DIR_INOUT, PALPC_MESSAGE_ATTRIBUTES,
+    "InMessageAttributes", "opt", DIR_INOUT, PALPC_MESSAGE_ATTRIBUTES,
+    "Timeout", "opt", DIR_IN, PLARGE_INTEGER,
 );
 SYSCALL(NtAlpcCancelMessage, NTSTATUS,
     "PortHandle", "", DIR_IN, HANDLE,

@@ -216,10 +216,43 @@ struct DataPrinter
         return printed;
     }
 
-    template <class Tv = T>
-    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
+
+    // base case for a subkey, probably never called directly but needed by compiler
+    static bool print(std::ostream& os, const fmt::Subkey& data, char sep)
     {
-        return data.has_value() && print_data(os, data.value(), sep);
+        if (data.sub_map.empty())
+        {
+            return false;
+        }
+
+        os << "{\n"; // unnamed object
+        for (const auto& [key, value] : data.sub_map)
+        {
+            os << "  "; // Indent
+            print_data(os, keyval(key.c_str(), value), ' ');
+            os << "\n";
+        }
+        os << "}";
+        return true;
+    }
+
+    template <class Tk>
+    static bool print(std::ostream& os, const std::pair<Tk, fmt::Subkey>& data, char sep)
+    {
+        const char* parent_key = data.first;
+        const auto& sub_map = data.second.sub_map;
+        if (sub_map.empty()) return false;
+
+        os << parent_key << ":\n";
+
+        for (const auto& [sub_key, sub_val] : sub_map)
+        {
+            os << "  ";
+            print_data(os, keyval(sub_key.c_str(), sub_val), ' ');
+            os << "\n";
+        }
+        fmt::unputc(os);
+        return true;
     }
 
     template <class Tk, class Tv>
@@ -257,6 +290,20 @@ struct DataPrinter
         {
             return print_data(os, arg, sep);
         }, data);
+    }
+};
+
+template <typename Tv>
+class DataPrinter<std::optional<Tv>>
+{
+public:
+    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
+    {
+        if (!data)
+        {
+            return false;
+        }
+        return DataPrinter<Tv>::print(os, *data, sep);
     }
 };
 

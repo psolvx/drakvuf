@@ -106,6 +106,7 @@
 #define DRAKVUF_PLUGINS_HELPERS_TYPE_TRAITS_H
 #pragma once
 
+#include <optional>
 #include <type_traits>
 
 template<class T>
@@ -134,6 +135,12 @@ struct is_iterable_helper<T, std::enable_if_t<has_begin_helper<T>::value&& has_e
 
 template <class T>
 struct is_iterable : is_iterable_helper<T> {};
+
+template<typename T>
+struct is_optional : std::false_type {};
+
+template<typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
 
 /**/
 

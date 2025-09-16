@@ -213,7 +213,7 @@ bool win_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user
     }
 
     PRINT_DEBUG("[SYSCALLS] KPCR address is: 0x%lx\n", kpcr);
-    
+
     addr_t kpcr_self_test = 0;
     vmi_read_addr_va(vmi, kpcr + 0x18, 0, &kpcr_self_test);
     PRINT_DEBUG("[SYSCALLS] KPCR self-pointer sanity check: 0x%lx (should match KPCR addr)\n", kpcr_self_test);
@@ -227,7 +227,7 @@ bool win_get_user_rsp(drakvuf_t drakvuf, drakvuf_trap_info_t* info, addr_t* user
         PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: vmi_read_addr_va FAILED with status %d\n", read_status);
         return false;
     }
-    
+
     *user_rsp = read_rsp;
     PRINT_DEBUG("[SYSCALLS] win_get_user_rsp: Successfully read user RSP: 0x%lx\n", read_rsp);
     return true;
@@ -1988,13 +1988,15 @@ bool win_get_pid_from_thread_handle(drakvuf_t drakvuf, drakvuf_trap_info_t* info
         .addr = eprocess_ptr_addr,
     );
 
-    if (VMI_SUCCESS != vmi_read_addr(drakvuf->vmi, &ctx, &eprocess)) {
+    if (VMI_SUCCESS != vmi_read_addr(drakvuf->vmi, &ctx, &eprocess))
+    {
         return false;
     }
 
-    if (!eprocess) {
+    if (!eprocess)
+    {
         return false;
     }
-    
+
     return win_get_process_pid(drakvuf, eprocess, pid);
 }

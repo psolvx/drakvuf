@@ -462,7 +462,7 @@ static event_response_t usermode_hook_cb(drakvuf_t drakvuf, drakvuf_trap_info* i
     plugin->ret_hooks[hookID] = std::move(hook);
 
     PRINT_DEBUG("[RPCMON] usermode hook hit at 0x%lx, return address: %lx, hook id %lx %lx\n", info->regs->rip, ret_addr, hookID.first, hookID.second);
-    
+
 
     return VMI_EVENT_RESPONSE_NONE;
 }
