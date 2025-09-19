@@ -878,7 +878,7 @@ void win_syscalls::print_syscall(
         priv_mode_opt = fmt::Rstr(mode == USER_MODE ? "User" : "Kernel");
 
 
-    if (this->m_output_format == OUTPUT_JSON || this->m_output_format == OUTPUT_KV || this->m_output_format == OUTPUT_DEFAULT)
+    if (this->m_output_format == OUTPUT_JSON || this->m_output_format == OUTPUT_KV || this->m_output_format == OUTPUT_DEFAULT || this->m_output_format == OUTPUT_CSV)
     {
         if (!this->nested_args)
         {

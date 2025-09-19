@@ -205,6 +205,12 @@ struct DataPrinter
         return true;
     }
 
+    template <class Tv = T>
+    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
+    {
+        return data.has_value() && print_data(os, data.value(), sep);
+    }
+
     // base case for a subkey, probably never called directly but needed by compiler
     static bool print(std::ostream& os, const fmt::Subkey& data, char sep)
     {
@@ -333,19 +339,6 @@ struct DataPrinter
     }
 };
 
-template <typename Tv>
-class DataPrinter<std::optional<Tv>>
-{
-public:
-    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
-    {
-        if (!data)
-        {
-            return false; // Nothing to print for KV format
-        }
-        return DataPrinter<Tv>::print(os, *data, sep);
-    }
-};
 
 template <class T>
 struct DataPrinter<T, std::enable_if_t<is_iterable<T>::value, void>>

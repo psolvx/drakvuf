@@ -216,6 +216,11 @@ struct DataPrinter
         return printed;
     }
 
+    template <class Tv = T>
+    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
+    {
+        return data.has_value() && print_data(os, data.value(), sep);
+    }
 
     // base case for a subkey, probably never called directly but needed by compiler
     static bool print(std::ostream& os, const fmt::Subkey& data, char sep)
@@ -225,14 +230,18 @@ struct DataPrinter
             return false;
         }
 
-        os << "{\n"; // unnamed object
+        bool printed = false;
+        os << "["; // unnamed object
         for (const auto& [key, value] : data.sub_map)
         {
-            os << "  "; // Indent
-            print_data(os, keyval(key.c_str(), value), ' ');
-            os << "\n";
+            bool printed_prev = printed;
+            if (printed)
+                os << sep;
+            printed = print_data(os, keyval(key.c_str(), value), ' ');
+            if (!printed && printed_prev)
+                fmt::unputc(os);
         }
-        os << "}";
+        os << "] ";
         return true;
     }
 
@@ -243,15 +252,19 @@ struct DataPrinter
         const auto& sub_map = data.second.sub_map;
         if (sub_map.empty()) return false;
 
-        os << parent_key << ":\n";
+        bool printed = false;
+        os << parent_key << ":[";
 
         for (const auto& [sub_key, sub_val] : sub_map)
         {
-            os << "  ";
-            print_data(os, keyval(sub_key.c_str(), sub_val), ' ');
-            os << "\n";
+            bool printed_prev = printed;
+            if (printed)
+                os << sep;
+            printed = print_data(os, keyval(sub_key.c_str(), sub_val), ' ');
+            if (!printed && printed_prev)
+                fmt::unputc(os);
         }
-        fmt::unputc(os);
+        os << "] ";
         return true;
     }
 
@@ -293,19 +306,6 @@ struct DataPrinter
     }
 };
 
-template <typename Tv>
-class DataPrinter<std::optional<Tv>>
-{
-public:
-    static bool print(std::ostream& os, const std::optional<Tv>& data, char sep)
-    {
-        if (!data)
-        {
-            return false;
-        }
-        return DataPrinter<Tv>::print(os, *data, sep);
-    }
-};
 
 template <class T>
 struct DataPrinter<T, std::enable_if_t<is_iterable<T>::value, void>>
