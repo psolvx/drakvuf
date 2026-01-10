@@ -1503,6 +1503,24 @@ bool win_get_process_data( drakvuf_t drakvuf, addr_t base_addr, proc_data_priv_t
                         .pid = 0,
                     );
                     proc_data->bitness = win_get_wow_peb(drakvuf, &ctx, base_addr) ? PROC_TYPE_32 : PROC_TYPE_64;
+
+                    // Get command line
+                    proc_data->cmdline = NULL;
+                    addr_t peb = 0;
+                    if (VMI_SUCCESS == vmi_read_addr_va(drakvuf->vmi, base_addr + drakvuf->offsets[EPROCESS_PEB], 0, &peb) && peb != 0)
+                    {
+                        addr_t proc_params = 0;
+                        if (VMI_SUCCESS == vmi_read_addr_va(drakvuf->vmi, peb + drakvuf->offsets[PEB_PROCESSPARAMETERS], proc_data->pid, &proc_params))
+                        {
+                            addr_t cmdline_va = proc_params + drakvuf->offsets[RTL_USER_PROCESS_PARAMETERS_COMMANDLINE];
+                            unicode_string_t* cmdline_us = drakvuf_read_unicode_va(drakvuf, cmdline_va, proc_data->pid);
+                            if (cmdline_us)
+                            {
+                                proc_data->cmdline = (char*)cmdline_us->contents;
+                                g_free((gpointer)cmdline_us);
+                            }
+                        }
+                    }
                     return true;
                 }
             }

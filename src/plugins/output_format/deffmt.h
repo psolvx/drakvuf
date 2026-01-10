@@ -424,7 +424,8 @@ inline void print_running_process(const char* plugin_name, drakvuf_t drakvuf, gi
         keyval("TIME", TimeVal{UNPACK_TIMEVAL(timestamp)}),
         keyval("PID", fmt::Nval(proc_data.pid)),
         keyval("PPID", fmt::Nval(proc_data.ppid)),
-        keyval("RunningProcess", fmt::Qstr(proc_data.name))
+        keyval("RunningProcess", fmt::Qstr(proc_data.name)),
+        proc_data.cmdline ? std::optional(keyval("CommandLine", fmt::Qstr(proc_data.cmdline))) : std::nullopt
     );
 }
 

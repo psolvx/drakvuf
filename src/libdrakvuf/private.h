@@ -331,6 +331,7 @@ typedef struct process_data_priv
     int64_t userid ;    /* Process SessionID/UID */
     uint32_t tid;       /* Thread id for Linux*/
     proc_type_t bitness;/* Process bitness 32/64 */
+    char* cmdline;      /* Process command line */
 } proc_data_priv_t ;
 
 struct memcb_pass

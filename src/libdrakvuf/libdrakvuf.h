@@ -214,6 +214,7 @@ typedef struct process_data
     int64_t userid ;    /* Process SessionID/UID */
     uint32_t tid ;      /* Thread Id for Linux & Windows*/
     proc_type_t bitness;/* Process bitness 32/64 */
+    const char* cmdline;/* Process command line */
 } proc_data_t ;
 
 typedef struct drakvuf* drakvuf_t;

@@ -510,7 +510,8 @@ inline void print_running_process(const char* plugin_name, drakvuf_t drakvuf, gi
         keyval("PID", fmt::Nval(proc_data.pid)),
         keyval("PPID", fmt::Nval(proc_data.ppid)),
         keyval("RunningProcess", fmt::Qstr(proc_data.name)),
-        keyval("Bitness", fmt::Nval(static_cast<int>(proc_data.bitness)))
+        keyval("Bitness", fmt::Nval(static_cast<int>(proc_data.bitness))),
+        proc_data.cmdline ? std::optional(keyval("CommandLine", fmt::Qstr(proc_data.cmdline))) : std::nullopt
     );
 }
 
